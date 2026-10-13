@@ -1,0 +1,806 @@
+[
+  {
+    "question": "Which customers have never placed an order?",
+    "strategy": "zero_shot",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT first_name, last_name FROM customers WHERE id NOT IN (SELECT DISTINCT customer_id FROM orders);",
+    "columns": [
+      "first_name",
+      "last_name"
+    ],
+    "rows": [
+      [
+        "Amelia",
+        "Lewis"
+      ],
+      [
+        "Henry",
+        "Young"
+      ]
+    ],
+    "answer": "The customers who have never placed an order are Amelia Lewis and Henry Young."
+  },
+  {
+    "question": "What is the best-selling product by total quantity sold?",
+    "strategy": "zero_shot",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT p.id, p.name, SUM(oi.quantity) AS total_quantity_sold\nFROM products p\nJOIN order_items oi ON p.id = oi.product_id\nGROUP BY p.id, p.name\nORDER BY total_quantity_sold DESC\nLIMIT 1;",
+    "columns": [
+      "id",
+      "name",
+      "total_quantity_sold"
+    ],
+    "rows": [
+      [
+        3,
+        "Bluetooth Speaker",
+        17
+      ]
+    ],
+    "answer": "The best-selling product by total quantity sold is the Bluetooth Speaker, with a total of 17 units sold."
+  },
+  {
+    "question": "How much revenue did the store make in 2025?",
+    "strategy": "zero_shot",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT SUM(cost) AS total_revenue\nFROM orders\nWHERE strftime('%Y', date) = '2025';",
+    "columns": [
+      "total_revenue"
+    ],
+    "rows": [
+      [
+        868369
+      ]
+    ],
+    "answer": "In 2025, the store made a total revenue of $8,683.69."
+  },
+  {
+    "question": "Which brand has brought in the most revenue?",
+    "strategy": "zero_shot",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT p.brand, SUM(o.cost) AS total_revenue\nFROM products p\nJOIN order_items oi ON p.id = oi.product_id\nJOIN orders o ON oi.order_id = o.id\nGROUP BY p.brand\nORDER BY total_revenue DESC\nLIMIT 1;",
+    "columns": [
+      "brand",
+      "total_revenue"
+    ],
+    "rows": [
+      [
+        "Logitech",
+        750807
+      ]
+    ],
+    "answer": "The brand that has brought in the most revenue is Logitech, with a total revenue of $7,508.07."
+  },
+  {
+    "question": "Who is our oldest customer, and what have they bought?",
+    "strategy": "zero_shot",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT c.first_name, c.last_name, p.name, oi.quantity\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nJOIN order_items oi ON o.id = oi.order_id\nJOIN products p ON oi.product_id = p.id\nWHERE c.birth_date = (SELECT MIN(birth_date) FROM customers);",
+    "columns": [
+      "first_name",
+      "last_name",
+      "name",
+      "quantity"
+    ],
+    "rows": [
+      [
+        "Lucas",
+        "Moore",
+        "Noise Cancelling Headphones",
+        1
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Gaming Controller",
+        1
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Gaming Controller",
+        2
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Smartphone Charger",
+        1
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Smart Plug 4-pack",
+        1
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Noise Cancelling Headphones",
+        1
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Laptop Stand",
+        3
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Gaming Controller",
+        1
+      ]
+    ],
+    "answer": "Our oldest customer is Lucas Moore. He has purchased the following items:\n\n- Noise Cancelling Headphones (2 total)\n- Gaming Controller (4 total)\n- Smartphone Charger (1)\n- Smart Plug 4-pack (1)\n- Laptop Stand (3)\n\nIf you have any more questions or need further assistance, feel free to ask!"
+  },
+  {
+    "question": "Which customers have an American Express card on file?",
+    "strategy": "zero_shot",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT DISTINCT c.first_name, c.last_name \nFROM customers c \nJOIN customer_payment_info cpi ON c.id = cpi.customer_id \nWHERE cpi.payment_type_name = 'American Express';",
+    "columns": [
+      "first_name",
+      "last_name"
+    ],
+    "rows": [
+      [
+        "Emma",
+        "Johnson"
+      ],
+      [
+        "Liam",
+        "Smith"
+      ],
+      [
+        "Olivia",
+        "Brown"
+      ],
+      [
+        "Noah",
+        "Davis"
+      ],
+      [
+        "Sophia",
+        "Anderson"
+      ]
+    ],
+    "answer": "The customers who have an American Express card on file are:\n\n- Emma Johnson\n- Liam Smith\n- Olivia Brown\n- Noah Davis\n- Sophia Anderson"
+  },
+  {
+    "question": "What was the busiest month for orders?",
+    "strategy": "zero_shot",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT strftime('%Y-%m', date) AS month, COUNT(*) AS order_count\nFROM orders\nGROUP BY month\nORDER BY order_count DESC\nLIMIT 1;",
+    "columns": [
+      "month",
+      "order_count"
+    ],
+    "rows": [
+      [
+        "2026-07",
+        5
+      ]
+    ],
+    "answer": "The busiest month for orders was July 2026, with a total of 5 orders placed."
+  },
+  {
+    "question": "Which customers bought a product that is now out of stock, so we can tell them it's backordered?",
+    "strategy": "zero_shot",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT DISTINCT c.id, c.first_name, c.last_name\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nJOIN order_items oi ON o.id = oi.order_id\nJOIN products p ON oi.product_id = p.id\nWHERE p.in_stock = 0;",
+    "columns": [
+      "id",
+      "first_name",
+      "last_name"
+    ],
+    "rows": [
+      [
+        8,
+        "Mason",
+        "Taylor"
+      ],
+      [
+        3,
+        "Olivia",
+        "Brown"
+      ],
+      [
+        9,
+        "Isabella",
+        "Thomas"
+      ],
+      [
+        14,
+        "Benjamin",
+        "Clark"
+      ],
+      [
+        6,
+        "Ethan",
+        "Wilson"
+      ],
+      [
+        13,
+        "Charlotte",
+        "Harris"
+      ],
+      [
+        12,
+        "James",
+        "White"
+      ],
+      [
+        5,
+        "Ava",
+        "Martinez"
+      ]
+    ],
+    "answer": "The following customers bought a product that is now out of stock and can be informed that it's backordered:\n\n1. Mason Taylor\n2. Olivia Brown\n3. Isabella Thomas\n4. Benjamin Clark\n5. Ethan Wilson\n6. Charlotte Harris\n7. James White\n8. Ava Martinez\n\nYou can reach out to them to let them know about the backorder!"
+  },
+  {
+    "question": "Which customers under 30 have spent more than $500 in total?",
+    "strategy": "zero_shot",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT c.id, c.first_name, c.last_name\nFROM customers c\nJOIN orders o ON c.id = o.customer_id\nWHERE (julianday('now') - julianday(c.birth_date)) / 365 < 30\nGROUP BY c.id\nHAVING SUM(o.cost) > 50000;",
+    "columns": [
+      "id",
+      "first_name",
+      "last_name"
+    ],
+    "rows": [
+      [
+        3,
+        "Olivia",
+        "Brown"
+      ],
+      [
+        5,
+        "Ava",
+        "Martinez"
+      ],
+      [
+        8,
+        "Mason",
+        "Taylor"
+      ]
+    ],
+    "answer": "The customers under 30 who have spent more than $500 in total are:\n\n1. Olivia Brown\n2. Ava Martinez\n3. Mason Taylor\n\nIf you have any more questions or need further assistance, feel free to ask!"
+  },
+  {
+    "question": "Do any order totals not match the sum of their item prices times quantities?",
+    "strategy": "zero_shot",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT o.id, o.cost, SUM(p.price * oi.quantity) AS calculated_total\nFROM orders o\nJOIN order_items oi ON o.id = oi.order_id\nJOIN products p ON oi.product_id = p.id\nGROUP BY o.id\nHAVING o.cost != SUM(p.price * oi.quantity);",
+    "columns": [
+      "id",
+      "cost",
+      "calculated_total"
+    ],
+    "rows": [],
+    "answer": "It looks like all order totals match the sum of their item prices times quantities. There are no discrepancies found in the data. If you have any other questions or need further assistance, feel free to ask!"
+  },
+  {
+    "question": "Which customers have never placed an order?",
+    "strategy": "single_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT first_name, last_name FROM customers WHERE id NOT IN (SELECT customer_id FROM orders);",
+    "columns": [
+      "first_name",
+      "last_name"
+    ],
+    "rows": [
+      [
+        "Amelia",
+        "Lewis"
+      ],
+      [
+        "Henry",
+        "Young"
+      ]
+    ],
+    "answer": "The customers who have never placed an order are Amelia Lewis and Henry Young."
+  },
+  {
+    "question": "What is the best-selling product by total quantity sold?",
+    "strategy": "single_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT p.name, SUM(oi.quantity) AS total_quantity_sold\nFROM products p\nJOIN order_items oi ON oi.product_id = p.id\nGROUP BY p.id\nORDER BY total_quantity_sold DESC\nLIMIT 1;",
+    "columns": [
+      "name",
+      "total_quantity_sold"
+    ],
+    "rows": [
+      [
+        "Webcam 1080p",
+        17
+      ]
+    ],
+    "answer": "The best-selling product by total quantity sold is the Webcam 1080p, with a total of 17 units sold."
+  },
+  {
+    "question": "How much revenue did the store make in 2025?",
+    "strategy": "single_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT SUM(cost) / 100.0 AS total_revenue_dollars\nFROM orders\nWHERE strftime('%Y', date) = '2025';",
+    "columns": [
+      "total_revenue_dollars"
+    ],
+    "rows": [
+      [
+        8683.69
+      ]
+    ],
+    "answer": "In 2025, the store made a total revenue of $8,683.69."
+  },
+  {
+    "question": "Which brand has brought in the most revenue?",
+    "strategy": "single_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT p.brand, SUM(o.cost) AS total_revenue\nFROM products p\nJOIN order_items oi ON oi.product_id = p.id\nJOIN orders o ON o.id = oi.order_id\nGROUP BY p.brand\nORDER BY total_revenue DESC\nLIMIT 1;",
+    "columns": [
+      "brand",
+      "total_revenue"
+    ],
+    "rows": [
+      [
+        "Logitech",
+        750807
+      ]
+    ],
+    "answer": "The brand that has brought in the most revenue is Logitech, with a total revenue of $7,508.07."
+  },
+  {
+    "question": "Who is our oldest customer, and what have they bought?",
+    "strategy": "single_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT c.first_name, c.last_name, p.name\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nJOIN order_items oi ON oi.order_id = o.id\nJOIN products p ON p.id = oi.product_id\nWHERE c.birth_date = (SELECT MIN(birth_date) FROM customers);",
+    "columns": [
+      "first_name",
+      "last_name",
+      "name"
+    ],
+    "rows": [
+      [
+        "Lucas",
+        "Moore",
+        "Noise Cancelling Headphones"
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Gaming Controller"
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Gaming Controller"
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Smartphone Charger"
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Noise Cancelling Headphones"
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Laptop Stand"
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Gaming Controller"
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Smart Plug 4-pack"
+      ]
+    ],
+    "answer": "Our oldest customer is Lucas Moore. He has purchased the following items:\n\n1. Noise Cancelling Headphones\n2. Gaming Controller (three times)\n3. Smartphone Charger\n4. Laptop Stand\n5. Smart Plug 4-pack\n\nIf you have any more questions or need further assistance, feel free to ask!"
+  },
+  {
+    "question": "Which customers have an American Express card on file?",
+    "strategy": "single_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT c.first_name, c.last_name\nFROM customers c\nJOIN customer_payment_info cpi ON cpi.customer_id = c.id\nWHERE cpi.payment_type_name = 'American Express';",
+    "columns": [
+      "first_name",
+      "last_name"
+    ],
+    "rows": [
+      [
+        "Emma",
+        "Johnson"
+      ],
+      [
+        "Liam",
+        "Smith"
+      ],
+      [
+        "Olivia",
+        "Brown"
+      ],
+      [
+        "Noah",
+        "Davis"
+      ],
+      [
+        "Sophia",
+        "Anderson"
+      ]
+    ],
+    "answer": "The customers who have an American Express card on file are:\n\n- Emma Johnson\n- Liam Smith\n- Olivia Brown\n- Noah Davis\n- Sophia Anderson"
+  },
+  {
+    "question": "What was the busiest month for orders?",
+    "strategy": "single_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT strftime('%Y-%m', date) AS month, COUNT(*) AS order_count\nFROM orders\nGROUP BY month\nORDER BY order_count DESC\nLIMIT 1;",
+    "columns": [
+      "month",
+      "order_count"
+    ],
+    "rows": [
+      [
+        "2026-07",
+        5
+      ]
+    ],
+    "answer": "The busiest month for orders was July 2026, with a total of 5 orders placed."
+  },
+  {
+    "question": "Which customers bought a product that is now out of stock, so we can tell them it's backordered?",
+    "strategy": "single_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT DISTINCT c.first_name, c.last_name\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nJOIN order_items oi ON oi.order_id = o.id\nJOIN products p ON p.id = oi.product_id\nWHERE p.in_stock = 0;",
+    "columns": [
+      "first_name",
+      "last_name"
+    ],
+    "rows": [
+      [
+        "Mason",
+        "Taylor"
+      ],
+      [
+        "Olivia",
+        "Brown"
+      ],
+      [
+        "Isabella",
+        "Thomas"
+      ],
+      [
+        "Benjamin",
+        "Clark"
+      ],
+      [
+        "Ethan",
+        "Wilson"
+      ],
+      [
+        "Charlotte",
+        "Harris"
+      ],
+      [
+        "James",
+        "White"
+      ],
+      [
+        "Ava",
+        "Martinez"
+      ]
+    ],
+    "answer": "The following customers bought a product that is now out of stock and can be informed that it's backordered:\n\n- Mason Taylor\n- Olivia Brown\n- Isabella Thomas\n- Benjamin Clark\n- Ethan Wilson\n- Charlotte Harris\n- James White\n- Ava Martinez\n\nYou can reach out to them with the update!"
+  },
+  {
+    "question": "Which customers under 30 have spent more than $500 in total?",
+    "strategy": "single_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT c.first_name, c.last_name, SUM(o.cost) / 100.0 AS total_spent_dollars\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nWHERE strftime('%Y', 'now') - strftime('%Y', c.birth_date) < 30\nGROUP BY c.id\nHAVING total_spent_dollars > 500\nORDER BY total_spent_dollars DESC;",
+    "columns": [
+      "first_name",
+      "last_name",
+      "total_spent_dollars"
+    ],
+    "rows": [
+      [
+        "Olivia",
+        "Brown",
+        3675.67
+      ],
+      [
+        "Ava",
+        "Martinez",
+        2469.85
+      ],
+      [
+        "Mason",
+        "Taylor",
+        2038.76
+      ]
+    ],
+    "answer": "It looks like there are no customers under 30 who have spent more than $500 in total. The customers listed, Olivia Brown, Ava Martinez, and Mason Taylor, all spent significantly more than that, but they are not under 30 years old based on the data we have. If you have any other questions or need further assistance, feel free to ask!"
+  },
+  {
+    "question": "Do any order totals not match the sum of their item prices times quantities?",
+    "strategy": "single_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT o.id\nFROM orders o\nJOIN order_items oi ON oi.order_id = o.id\nGROUP BY o.id\nHAVING o.cost != SUM(oi.quantity * (SELECT price FROM products WHERE id = oi.product_id));",
+    "columns": [
+      "id"
+    ],
+    "rows": [],
+    "answer": "It looks like all order totals match the sum of their item prices times quantities. There are no discrepancies found in the orders. If you have any other questions or need further assistance, feel free to ask!"
+  },
+  {
+    "question": "Which customers have never placed an order?",
+    "strategy": "cross_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT c.first_name, c.last_name\nFROM customers c\nLEFT JOIN orders o ON o.customer_id = c.id\nWHERE o.id IS NULL;",
+    "columns": [
+      "first_name",
+      "last_name"
+    ],
+    "rows": [
+      [
+        "Amelia",
+        "Lewis"
+      ],
+      [
+        "Henry",
+        "Young"
+      ]
+    ],
+    "answer": "The customers who have never placed an order are Amelia Lewis and Henry Young."
+  },
+  {
+    "question": "What is the best-selling product by total quantity sold?",
+    "strategy": "cross_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT p.name, SUM(oi.quantity) AS total_sold\nFROM products p\nJOIN order_items oi ON p.id = oi.product_id\nGROUP BY p.id\nORDER BY total_sold DESC\nLIMIT 1;",
+    "columns": [
+      "name",
+      "total_sold"
+    ],
+    "rows": [
+      [
+        "Webcam 1080p",
+        17
+      ]
+    ],
+    "answer": "The best-selling product by total quantity sold is the Webcam 1080p, with a total of 17 units sold."
+  },
+  {
+    "question": "How much revenue did the store make in 2025?",
+    "strategy": "cross_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT SUM(cost) AS total_revenue\nFROM orders\nWHERE strftime('%Y', date) = '2025';",
+    "columns": [
+      "total_revenue"
+    ],
+    "rows": [
+      [
+        868369
+      ]
+    ],
+    "answer": "In 2025, the store made a total revenue of $8,683.69."
+  },
+  {
+    "question": "Which brand has brought in the most revenue?",
+    "strategy": "cross_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT p.brand, SUM(o.cost) AS total_revenue\nFROM products p\nJOIN order_items oi ON oi.product_id = p.id\nJOIN orders o ON o.id = oi.order_id\nGROUP BY p.brand\nORDER BY total_revenue DESC\nLIMIT 1;",
+    "columns": [
+      "brand",
+      "total_revenue"
+    ],
+    "rows": [
+      [
+        "Logitech",
+        750807
+      ]
+    ],
+    "answer": "The brand that has brought in the most revenue is Logitech, with a total revenue of $7,508.07."
+  },
+  {
+    "question": "Who is our oldest customer, and what have they bought?",
+    "strategy": "cross_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT c.first_name, c.last_name, p.name, oi.quantity\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nJOIN order_items oi ON oi.order_id = o.id\nJOIN products p ON p.id = oi.product_id\nWHERE c.birth_date = (SELECT MIN(birth_date) FROM customers);",
+    "columns": [
+      "first_name",
+      "last_name",
+      "name",
+      "quantity"
+    ],
+    "rows": [
+      [
+        "Lucas",
+        "Moore",
+        "Noise Cancelling Headphones",
+        1
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Gaming Controller",
+        1
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Gaming Controller",
+        2
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Smartphone Charger",
+        1
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Smart Plug 4-pack",
+        1
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Noise Cancelling Headphones",
+        1
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Laptop Stand",
+        3
+      ],
+      [
+        "Lucas",
+        "Moore",
+        "Gaming Controller",
+        1
+      ]
+    ],
+    "answer": "Our oldest customer is Lucas Moore. He has purchased the following items:\n\n- Noise Cancelling Headphones (1 unit)\n- Gaming Controller (1 unit)\n- Gaming Controller (2 units)\n- Smartphone Charger (1 unit)\n- Smart Plug 4-pack (1 unit)\n- Noise Cancelling Headphones (1 unit)\n- Laptop Stand (3 units)\n- Gaming Controller (1 unit)\n\nIf you have any more questions or need further assistance, feel free to ask!"
+  },
+  {
+    "question": "Which customers have an American Express card on file?",
+    "strategy": "cross_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT c.first_name, c.last_name\nFROM customers c\nJOIN customer_payment_info cpi ON cpi.customer_id = c.id\nWHERE cpi.payment_type_name = 'American Express';",
+    "columns": [
+      "first_name",
+      "last_name"
+    ],
+    "rows": [
+      [
+        "Emma",
+        "Johnson"
+      ],
+      [
+        "Liam",
+        "Smith"
+      ],
+      [
+        "Olivia",
+        "Brown"
+      ],
+      [
+        "Noah",
+        "Davis"
+      ],
+      [
+        "Sophia",
+        "Anderson"
+      ]
+    ],
+    "answer": "The customers who have an American Express card on file are:\n\n- Emma Johnson\n- Liam Smith\n- Olivia Brown\n- Noah Davis\n- Sophia Anderson"
+  },
+  {
+    "question": "What was the busiest month for orders?",
+    "strategy": "cross_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT strftime('%Y-%m', date) AS month, COUNT(*) AS order_count\nFROM orders\nGROUP BY month\nORDER BY order_count DESC\nLIMIT 1;",
+    "columns": [
+      "month",
+      "order_count"
+    ],
+    "rows": [
+      [
+        "2026-07",
+        5
+      ]
+    ],
+    "answer": "The busiest month for orders was July 2026, with a total of 5 orders placed."
+  },
+  {
+    "question": "Which customers bought a product that is now out of stock, so we can tell them it's backordered?",
+    "strategy": "cross_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT DISTINCT c.first_name, c.last_name\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nJOIN order_items oi ON oi.order_id = o.id\nJOIN products p ON p.id = oi.product_id\nWHERE p.in_stock = 0;",
+    "columns": [
+      "first_name",
+      "last_name"
+    ],
+    "rows": [
+      [
+        "Mason",
+        "Taylor"
+      ],
+      [
+        "Olivia",
+        "Brown"
+      ],
+      [
+        "Isabella",
+        "Thomas"
+      ],
+      [
+        "Benjamin",
+        "Clark"
+      ],
+      [
+        "Ethan",
+        "Wilson"
+      ],
+      [
+        "Charlotte",
+        "Harris"
+      ],
+      [
+        "James",
+        "White"
+      ],
+      [
+        "Ava",
+        "Martinez"
+      ]
+    ],
+    "answer": "The following customers bought a product that is now out of stock and can be informed that it's backordered:\n\n- Mason Taylor\n- Olivia Brown\n- Isabella Thomas\n- Benjamin Clark\n- Ethan Wilson\n- Charlotte Harris\n- James White\n- Ava Martinez\n\nYou can reach out to them with the update!"
+  },
+  {
+    "question": "Which customers under 30 have spent more than $500 in total?",
+    "strategy": "cross_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT c.first_name, c.last_name\nFROM customers c\nJOIN orders o ON o.customer_id = c.id\nWHERE (julianday('now') - julianday(c.birth_date)) / 365 < 30\nGROUP BY c.id\nHAVING SUM(o.cost) > 50000;",
+    "columns": [
+      "first_name",
+      "last_name"
+    ],
+    "rows": [
+      [
+        "Olivia",
+        "Brown"
+      ],
+      [
+        "Ava",
+        "Martinez"
+      ],
+      [
+        "Mason",
+        "Taylor"
+      ]
+    ],
+    "answer": "The customers under 30 who have spent more than $500 in total are:\n\n- Olivia Brown\n- Ava Martinez\n- Mason Taylor"
+  },
+  {
+    "question": "Do any order totals not match the sum of their item prices times quantities?",
+    "strategy": "cross_domain",
+    "model": "gpt-4o-mini",
+    "sql": "SELECT o.id\nFROM orders o\nLEFT JOIN order_items oi ON oi.order_id = o.id\nGROUP BY o.id\nHAVING o.cost != SUM(oi.quantity * (SELECT price FROM products WHERE id = oi.product_id));",
+    "columns": [
+      "id"
+    ],
+    "rows": [],
+    "answer": "It looks like all order totals match the sum of their item prices times quantities. There are no discrepancies found in the orders. If you have any more questions or need further assistance, feel free to ask!"
+  }
+]
